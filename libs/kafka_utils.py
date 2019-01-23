@@ -24,7 +24,7 @@ data = file.write(KAFKA_TRUSTED_CERT)
 file.close()
 
 KAFKA_PREFIX=  os.getenv('KAFKA_PREFIX','')
-KAKFA_TOPIC= "web-to-kafka"
+KAKFA_TOPIC= "syncaccount__e"
 KAFKA_GROUP_ID="puller"
 
 KAFKA_COMPLETE_TOPIC = KAFKA_PREFIX + KAKFA_TOPIC
@@ -113,4 +113,4 @@ def receiveFromKafka(mode):
         #consumer.commit(message.offset)
         i += 1
 
-sendToKafka("subscribe")
+receiveFromKafka("subscribe")
