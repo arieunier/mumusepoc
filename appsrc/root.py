@@ -24,6 +24,33 @@ class ReusableForm(Form):
 
 # poc function
 
+
+@app.route('/insee', methods=['POST'])
+def majAddress():
+    try:
+        logger.error(utils.get_debug_all(request))
+        # gets inseeid
+        Siren__c = request.args.get('Siren__c')
+        # gets new city
+        city = request.args.get('city') 
+        if (city == '' or city == None):
+            return utils.returnResponse("Please provide a city", 403, None, None) 
+        #check if siren__c exits
+        if (postgres.__checkAccountBySiren(Siren__c) == False):
+            return utils.returnResponse("Please provide a Siren", 403, None, None) 
+        # check if city exist   
+        # updates
+        postgres.__updateCityInAccountBySiren(city, Siren__c)
+
+        return "ok"
+         
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        cookie, cookie_exists =  utils.getCookie()
+        return utils.returnResponse("An error occured, check logDNA for more information", 403, cookie, cookie_exists) 
+
+
 @app.route('/contact', methods=['GET'])
 def contact():
     try:

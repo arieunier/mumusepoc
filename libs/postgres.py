@@ -25,6 +25,23 @@ if (DATABASE_URL != ''):
     session_postgres = dbSession_postgres()
     logger.info("{} - Initialization done Postgresql ".format(datetime.now()))
 
+def __checkAccountBySiren(siren__c):
+    sql = """
+        select acc.sfid from salesforce.account acc where acc.Siren__c=%(siren__c)s
+        """
+    data = __execRequest(sql, {'siren__c':siren__c}) 
+    logger.warning(data)
+    if (len(data['data'] )>0):
+        return True 
+    return False
+
+def __updateCityInAccountBySiren(city, siren__c):
+    sql = """
+        update salesforce.account set addressline5__c=%(city)s where Siren__c=%(siren__c)s
+        """
+    data = __execUpdate(sql, {'siren__c':siren__c, "city":city}) 
+    
+
 
 def __getGameActivityById(gameactivity__c):
     key = {"sqlRequest" : "__getGameActivityById", "activityId" : gameactivity__c}
@@ -134,7 +151,11 @@ def __getMatchById(match_id):
 
     return data
 
+def __execUpdate(strReq, Attributes):
+    if (MANUAL_ENGINE_POSTGRES != None):
+        result = MANUAL_ENGINE_POSTGRES.execute(strReq, Attributes)
 
+       
 def __execRequest(strReq, Attributes):
     if (MANUAL_ENGINE_POSTGRES != None):
         result = MANUAL_ENGINE_POSTGRES.execute(strReq, Attributes)
