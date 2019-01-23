@@ -32,7 +32,13 @@ KAFKA_COMPLETE_TOPIC = KAFKA_PREFIX + KAKFA_TOPIC
     All the variable names here match the heroku env variable names.
     Just pass the env values straight in and it will work.
 """
-producer = HerokuKafkaProducer(
+
+
+
+
+
+def sendToKafka_HardCoded(data):
+    producer = HerokuKafkaProducer(
         url= KAFKA_URL, # Url string provided by heroku
         ssl_cert= KAFKA_CLIENT_CERT, # Client cert string
         ssl_key= KAFKA_CLIENT_CERT_KEY, # Client cert key string
@@ -40,8 +46,33 @@ producer = HerokuKafkaProducer(
         prefix= KAFKA_PREFIX# Prefix provided by heroku,       
         #,partitioner="0"
     )
+    """
+    The .send method will automatically prefix your topic with the KAFKA_PREFIX
+    NOTE: If the message doesn't seem to be sending try `producer.flush()` to force send.
+    """
+    producer.send('.ple', data, partition=1)
+    producer.flush()
 
-consumer = HerokuKafkaConsumer(
+
+def sendToKafka(data):
+    producer = HerokuKafkaProducer(
+        url= KAFKA_URL, # Url string provided by heroku
+        ssl_cert= KAFKA_CLIENT_CERT, # Client cert string
+        ssl_key= KAFKA_CLIENT_CERT_KEY, # Client cert key string
+        ssl_ca= KAFKA_TRUSTED_CERT, # Client trusted cert string
+        prefix= KAFKA_PREFIX# Prefix provided by heroku,       
+        #,partitioner="0"
+    )
+    """
+    The .send method will automatically prefix your topic with the KAFKA_PREFIX
+    NOTE: If the message doesn't seem to be sending try `producer.flush()` to force send.
+    """
+    producer.send(KAKFA_TOPIC, data, partition=0)
+
+
+def receiveFromKafka(mode):
+
+    consumer = HerokuKafkaConsumer(
         #KAKFA_TOPIC, # Optional: You don't need to pass any topic at all
         url= KAFKA_URL, # Url string provided by heroku
         ssl_cert= KAFKA_CLIENT_CERT, # Client cert string
@@ -54,18 +85,8 @@ consumer = HerokuKafkaConsumer(
         auto_commit_interval_ms=10,
         #group_id=KAFKA_GROUP_ID,
         api_version = (0,9)
-)
+    )
 
-
-def sendToKafka(data):
-    """
-    The .send method will automatically prefix your topic with the KAFKA_PREFIX
-    NOTE: If the message doesn't seem to be sending try `producer.flush()` to force send.
-    """
-    producer.send(KAKFA_TOPIC, data, partition=0)
-
-
-def receiveFromKafka(mode):
     """
     To subscribe to topic(s) after creating a consumer pass in a list of topics without the
     KAFKA_PREFIX.
@@ -113,4 +134,5 @@ def receiveFromKafka(mode):
         #consumer.commit(message.offset)
         i += 1
 
-receiveFromKafka("subscribe")
+#receiveFromKafka("subscribe")
+sendToKafka_HardCoded("subscribe")

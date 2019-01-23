@@ -4,7 +4,7 @@ from datetime import datetime
 import ujson
 import uuid
 from flask_bootstrap import Bootstrap
-from libs import postgres , utils , logs, rediscache, notification
+from libs import postgres , utils , logs, rediscache, notification, kafka_utils
 from appsrc import app, logger
 from flask import make_response
 from wtforms import Form, TextField, TextAreaField, validators, StringField, SubmitField
@@ -25,25 +25,34 @@ class ReusableForm(Form):
 # poc function
 
 
-@app.route('/insee', methods=['POST'])
+@app.route('/insee', methods=['POST', 'GET'])
 def majAddress():
     try:
-        logger.error(utils.get_debug_all(request))
-        # gets inseeid
-        Siren__c = request.args.get('Siren__c')
-        # gets new city
-        city = request.args.get('city') 
-        if (city == '' or city == None):
-            return utils.returnResponse("Please provide a city", 403, None, None) 
-        #check if siren__c exits
-        if (postgres.__checkAccountBySiren(Siren__c) == False):
-            return utils.returnResponse("Please provide a Siren", 403, None, None) 
-        # check if city exist   
-        # updates
-        postgres.__updateCityInAccountBySiren(city, Siren__c)
+        if (request.method =='POST'):
+            logger.error(utils.get_debug_all(request))
+            # gets inseeid
+            Siren__c = request.args.get('Siren__c')
+            # gets new city
+            city = request.args.get('city') 
+            if (city == '' or city == None):
+                return utils.returnResponse("Please provide a city", 403, None, None) 
+            #check if siren__c exits
+            if (postgres.__checkAccountBySiren(Siren__c) == False):
+                return utils.returnResponse("Please provide a Siren", 403, None, None) 
+            # check if city exist   
+            # updates
+            postgres.__updateCityInAccountBySiren(city, Siren__c)
 
-        return "ok"
-         
+            return "ok"
+        elif (request.method == 'GET'):
+            logger.error(utils.get_debug_all(request))
+            cookie, cookie_exists =  utils.getCookie()
+            # gets inseeid
+            Siren__c = request.args.get('Siren__c')
+            data = postgres.__getAccountBySiren(Siren__c)
+            kafka_utils.sendToKafka_HardCoded(ujson.dumps(data))
+            return utils.returnResponse(ujson.dumps(data), 200, cookie, cookie_exists) 
+
     except Exception as e:
         import traceback
         traceback.print_exc()
