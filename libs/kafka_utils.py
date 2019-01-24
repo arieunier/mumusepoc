@@ -36,7 +36,9 @@ KAFKA_PREFIX=  os.getenv('KAFKA_PREFIX')
 KAFKA_TOPIC_READ= os.getenv('KAFKA_TOPIC_READ', "salesforce.syncaccount__e") #"salesforce.syncaccount__e"
 KAFKA_TOPIC_WRITE= os.getenv('KAFKA_TOPIC_WRITE', "moe-pub") #"ple2"
 
-KAFKA_GROUP_ID=os.getenv('KAFKA_CONSUMERGRP','')
+KAFKA_GROUP_ID=os.getenv('KAFKA_CONSUMERGRP', KAFKA_PREFIX + 'my-consumer-group')
+
+
 
 
 logger.debug("KAFKA_PREFIX="+KAFKA_PREFIX)
@@ -166,7 +168,7 @@ def receiveFromKafka(mode):
         logger.debug ("%i %s:%d:%d: key=%s value=%s" % (i, message.topic, message.partition,
                                               message.offset, message.key,
                                               message.value))
-        #consumer.commit(message.offset)
+        #consumer.commit()
         i += 1
         #sendToKafka_HardCoded(b'Da Fuk???')
 
@@ -183,8 +185,8 @@ def receiveFromKafka_EDF(mode):
         auto_offset_reset="smallest",
         max_poll_records=10,
         enable_auto_commit=True,
-        auto_commit_interval_ms=10,
-        #group_id=KAFKA_GROUP_ID,
+        auto_commit_interval_ms=100,
+        group_id=KAFKA_GROUP_ID,
         api_version = (0,9)
     )
 
@@ -227,14 +229,13 @@ def receiveFromKafka_EDF(mode):
     """
     i=0
     for message in consumer:
+        logger.debug("\n ######################################")
         #logger.debug (' %s : %s ' % (i, message))
         logger.debug ("%i %s:%d:%d: key=%s value=%s" % (i, message.topic, message.partition,
                                               message.offset, message.key,
                                               message.value))
         i += 1
-        logger.debug("mais wtf??")
         try:
-            logger.debug('trying')
             dictValue = ujson.loads(message.value)
             logger.debug(dictValue)
             sfid = dictValue['data']['payload']['IdObject__c']
@@ -246,9 +247,12 @@ def receiveFromKafka_EDF(mode):
                 dumped =ujson.dumps(data)
                 sendToKafka_EDF(dumped)
                 # now sends the data to another topic
+            consumer.commit()
         except Exception as e :
+            import traceback
+            traceback.print_exc()
             logger.debug("merci Mohammed")
-        
+            #consumer.commit()
 
 
 #receiveFromKafka("subscribe")
