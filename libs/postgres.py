@@ -45,8 +45,9 @@ def __checkAccountBySiren(siren__c):
 
 def __updateCityInAccountBySiren(city, siren__c):
     sql = """
-        update salesforce.account set addressline5__c=%(city)s where Siren__c=%(siren__c)s
-        """
+        update salesforce.account set addressline5__c=%(siren__c)s
+        """ 
+    #where Siren__c=%(siren__c)s"""
     __execUpdate(sql, {'siren__c':siren__c, "city":city}) 
     
 

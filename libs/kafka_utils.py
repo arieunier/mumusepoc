@@ -135,4 +135,4 @@ def receiveFromKafka(mode):
         i += 1
 
 #receiveFromKafka("subscribe")
-sendToKafka_HardCoded("subscribe")
+#sendToKafka_HardCoded("subscribe")
