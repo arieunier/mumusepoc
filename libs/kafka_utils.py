@@ -5,6 +5,14 @@ from libs import postgres
 import os 
 import uuid, ujson
 
+from libs import logs
+
+logger = logs.logger_init(loggername='app',
+            filename="log.log",
+            debugvalue=logs.LOG_LEVEL,
+            flaskapp=None)
+
+
 
 KAFKA_URL=  os.getenv('KAFKA_URL','')
 KAFKA_CLIENT_CERT=  os.getenv('KAFKA_CLIENT_CERT','')
@@ -31,10 +39,10 @@ KAFKA_TOPIC_WRITE= os.getenv('KAFKA_TOPIC_WRITE', "moe-pub") #"ple2"
 KAFKA_GROUP_ID=os.getenv('KAFKA_CONSUMERGRP','')
 
 
-print("KAFKA_PREFIX="+KAFKA_PREFIX)
-print("KAKFA_TOPIC_READ="+KAFKA_TOPIC_READ)
-print("KAKFA_TOPIC_WRITE="+KAFKA_TOPIC_WRITE)
-print("KAFKA_GROUP_ID="+KAFKA_GROUP_ID)
+logger.debug("KAFKA_PREFIX="+KAFKA_PREFIX)
+logger.debug("KAKFA_TOPIC_READ="+KAFKA_TOPIC_READ)
+logger.debug("KAKFA_TOPIC_WRITE="+KAFKA_TOPIC_WRITE)
+logger.debug("KAFKA_GROUP_ID="+KAFKA_GROUP_ID)
 
 """
     All the variable names here match the heroku env variable names.
@@ -50,7 +58,7 @@ def testKafkaHelperRCV():
     import kafka_helper
     consumer = kafka_helper.get_kafka_consumer(topic='ple2')
     for message in consumer:
-        print(message)
+        logger.debug(message)
 
 def testEDF():
     from kafka import KafkaProducer
@@ -75,10 +83,10 @@ def sendToKafka_EDF(data):
     The .send method will automatically prefix your topic with the KAFKA_PREFIX
     NOTE: If the message doesn't seem to be sending try `producer.flush()` to force send.
     """
-    print("about to send {} to topic {}".format(data, KAFKA_TOPIC_WRITE))
+    logger.debug("about to send {} to topic {}".format(data, KAFKA_TOPIC_WRITE))
     producer.send(KAFKA_TOPIC_WRITE, data.encode())
     producer.flush()
-    print("done")
+    logger.debug("done")
 
 
 def sendToKafka(data):
@@ -129,20 +137,20 @@ def receiveFromKafka(mode):
     # display list of partition assignerd
     assignments = consumer.assignment()
     for assignment in assignments:
-        print(assignment)
+        logger.debug(assignment)
     
     partitions=consumer.partitions_for_topic(KAFKA_PREFIX + KAFKA_TOPIC_READ)
     if (partitions):
         for partition in partitions:
-            print("Partition="+str(partition))
+            logger.debug("Partition="+str(partition))
     
     
     topics=consumer.topics()
     if (topics):
         for topic in topics:
-            print("Topic:"+topic)
+            logger.debug("Topic:"+topic)
     #exit(1)
-    print('waiting ..')
+    logger.debug('waiting ..')
     """
     .assign requires a full topic name with prefix
     """
@@ -154,8 +162,8 @@ def receiveFromKafka(mode):
     """
     i=0
     for message in consumer:
-        #print (' %s : %s ' % (i, message))
-        print ("%i %s:%d:%d: key=%s value=%s" % (i, message.topic, message.partition,
+        #logger.debug (' %s : %s ' % (i, message))
+        logger.debug ("%i %s:%d:%d: key=%s value=%s" % (i, message.topic, message.partition,
                                               message.offset, message.key,
                                               message.value))
         #consumer.commit(message.offset)
@@ -195,19 +203,19 @@ def receiveFromKafka_EDF(mode):
     # display list of partition assignerd
     assignments = consumer.assignment()
     for assignment in assignments:
-        print(assignment)
+        logger.debug(assignment)
     
     partitions=consumer.partitions_for_topic(KAFKA_PREFIX + KAFKA_TOPIC_READ)
     if (partitions):
         for partition in partitions:
-            print("Partition="+str(partition))
+            logger.debug("Partition="+str(partition))
     
     
     topics=consumer.topics()
     if (topics):
         for topic in topics:
-            print("Topic:"+topic)
-    print('waiting ..')
+            logger.debug("Topic:"+topic)
+    logger.debug('waiting ..')
     """
     .assign requires a full topic name with prefix
     """
@@ -219,16 +227,16 @@ def receiveFromKafka_EDF(mode):
     """
     i=0
     for message in consumer:
-        #print (' %s : %s ' % (i, message))
-        print ("%i %s:%d:%d: key=%s value=%s" % (i, message.topic, message.partition,
+        #logger.debug (' %s : %s ' % (i, message))
+        logger.debug ("%i %s:%d:%d: key=%s value=%s" % (i, message.topic, message.partition,
                                               message.offset, message.key,
                                               message.value))
         i += 1
-        print("mais wtf??")
+        logger.debug("mais wtf??")
         try:
-            print('trying')
+            logger.debug('trying')
             dictValue = ujson.loads(message.value)
-            print(dictValue)
+            logger.debug(dictValue)
             sfid = dictValue['data']['payload']['IdObject__c']
             typeEvent = dictValue['data']['payload']['TypeEvent__c']
 
@@ -239,7 +247,7 @@ def receiveFromKafka_EDF(mode):
                 sendToKafka_EDF(dumped)
                 # now sends the data to another topic
         except Exception as e :
-            print("merci Mohammed")
+            logger.debug("merci Mohammed")
         
 
 
