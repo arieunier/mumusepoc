@@ -24,18 +24,34 @@ data = file.write(KAFKA_TRUSTED_CERT)
 file.close()
 
 KAFKA_PREFIX=  os.getenv('KAFKA_PREFIX','')
-KAKFA_TOPIC= "salesforce.syncaccount__e"
-KAFKA_GROUP_ID="puller"
+KAKFA_TOPIC_READ= os.getenv('KAKFA_TOPIC_READ','salesforce.syncaccount__e') #"salesforce.syncaccount__e"
+KAKFA_TOPIC_WRITE= os.getenv('KAKFA_TOPIC_WRITE','ple2') #"ple2"
+KAFKA_GROUP_ID=os.getenv('KAFKA_CONSUMERGRP','')
 
-KAFKA_COMPLETE_TOPIC = KAFKA_PREFIX + KAKFA_TOPIC
 """
     All the variable names here match the heroku env variable names.
     Just pass the env values straight in and it will work.
 """
 
+def testKafkaHelperSND():
+    import kafka_helper
+    producer = kafka_helper.get_kafka_producer()
+    producer.send('ple2', key='my key', value={'k': 'v'})
 
+def testKafkaHelperRCV():
+    import kafka_helper
+    consumer = kafka_helper.get_kafka_consumer(topic='ple2')
+    for message in consumer:
+        print(message)
 
-
+def testEDF():
+    from kafka import KafkaProducer
+    producer = KafkaProducer(bootstrap_servers=KAFKA_URL)
+    for _ in range(100):
+        producer.send('ple2', b'some_message_bytes')
+    # Block until a single message is sent (or timeout)
+    future = producer.send('foobar', b'another_message')
+    result = future.get(timeout=60)
 
 def sendToKafka_HardCoded(data):
     producer = HerokuKafkaProducer(
@@ -46,11 +62,12 @@ def sendToKafka_HardCoded(data):
         prefix= KAFKA_PREFIX# Prefix provided by heroku,       
         #,partitioner="0"
     )
+
     """
     The .send method will automatically prefix your topic with the KAFKA_PREFIX
     NOTE: If the message doesn't seem to be sending try `producer.flush()` to force send.
     """
-    producer.send('.ple', data, partition=1)
+    producer.send(KAKFA_TOPIC_WRITE, data)
     producer.flush()
 
 
@@ -67,7 +84,7 @@ def sendToKafka(data):
     The .send method will automatically prefix your topic with the KAFKA_PREFIX
     NOTE: If the message doesn't seem to be sending try `producer.flush()` to force send.
     """
-    producer.send(KAKFA_TOPIC, data, partition=0)
+    producer.send(KAKFA_TOPIC_WRITE, data, partition=0)
 
 
 def receiveFromKafka(mode):
@@ -80,7 +97,7 @@ def receiveFromKafka(mode):
         ssl_ca= KAFKA_TRUSTED_CERT, # Client trusted cert string
         prefix= KAFKA_PREFIX, # Prefix provided by heroku,
         auto_offset_reset="smallest",
-        max_poll_records=500,
+        max_poll_records=10,
         enable_auto_commit=True,
         auto_commit_interval_ms=10,
         #group_id=KAFKA_GROUP_ID,
@@ -91,11 +108,11 @@ def receiveFromKafka(mode):
     To subscribe to topic(s) after creating a consumer pass in a list of topics without the
     KAFKA_PREFIX.
     """
-    partition=0
+    partition=1
     
-    tp = TopicPartition(KAFKA_PREFIX + KAKFA_TOPIC, partition)
+    tp = TopicPartition(KAFKA_PREFIX + KAKFA_TOPIC_READ, partition)
     if (mode == "subscribe"):
-        consumer.subscribe(topics=(KAKFA_TOPIC))
+        consumer.subscribe(topics=(KAKFA_TOPIC_READ))
     elif (mode == "assign"):
         consumer.assign([tp])
 
@@ -104,7 +121,7 @@ def receiveFromKafka(mode):
     for assignment in assignments:
         print(assignment)
     
-    partitions=consumer.partitions_for_topic(KAFKA_PREFIX + KAKFA_TOPIC)
+    partitions=consumer.partitions_for_topic(KAFKA_PREFIX + KAKFA_TOPIC_READ)
     if (partitions):
         for partition in partitions:
             print(partition)
@@ -133,6 +150,14 @@ def receiveFromKafka(mode):
                                               message.value))
         #consumer.commit(message.offset)
         i += 1
+        if ('Fuk' in message.value.decode()):
+            print("/o/")
+            exit(1)
+        #sendToKafka_HardCoded(b'Da Fuk???')
 
 #receiveFromKafka("subscribe")
-#sendToKafka_HardCoded("subscribe")
+#import ujson
+#data = ujson.dumps({'key':'value'})
+#print(data)
+#sendToKafka_HardCoded(data)
+#testKafkaHelperRCV()
