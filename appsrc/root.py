@@ -50,7 +50,7 @@ def majAddress():
             # gets inseeid
             Siren__c = request.args.get('Siren__c')
             data = postgres.__getAccountBySiren(Siren__c)
-            kafka_utils.sendToKafka_HardCoded(ujson.dumps(data))
+            kafka_utils.sendToKafka_EDF(ujson.dumps(data))
             return utils.returnResponse(ujson.dumps(data), 200, cookie, cookie_exists) 
 
     except Exception as e:
