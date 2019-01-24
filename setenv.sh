@@ -26,6 +26,6 @@ export REDIS_URL=`heroku config:get REDIS_URL --app edfpocsynchrodata`
 #export PUSHER_SOCKET_URL=`heroku config:get PUSHER_SOCKET_URL --app yourdemo`
 #export PUSHER_URL=`heroku config:get PUSHER_URL --app yourdemo`
 export APP_CLIENT_ID="3MVG9TSaZ8P6zP1oXkMT5WIwgzXQZXKdG560bpIt_.O7NGAwNDcr1b1WS_3EG7Hi9JBgSvcdcqr4E.N5gP8Yi"
-export APP_CLIENT_SECRET="3575743754532648444"
+export APP_CLIENT_SECRET="youcantknow"
 export KAFKA_TOPIC_READ="salesforce.syncaccount__e"
 export KAFKA_TOPIC_WRITE="moe-pub"
