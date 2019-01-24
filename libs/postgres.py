@@ -25,6 +25,14 @@ if (DATABASE_URL != ''):
     session_postgres = dbSession_postgres()
     logger.info("{} - Initialization done Postgresql ".format(datetime.now()))
 
+def __getAccountBySfId(sfid):
+    sql = """
+        select acc.* from salesforce.account acc where acc.sfid=%(sfid)s
+        """
+    data = __execRequest(sql, {'sfid':sfid}) 
+    logger.warning(data)
+    return data
+
 def __getAccountBySiren(siren__c):
     sql = """
         select acc.* from salesforce.account acc where acc.Siren__c=%(siren__c)s
